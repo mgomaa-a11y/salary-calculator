@@ -6,37 +6,55 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
+    // 1. التحقق من وجود المفتاح في بيئة Vercel
     if (!apiKey) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY غير مضاف في Vercel' });
+        return res.status(500).json({ error: 'مفتاح GEMINI_API_KEY غير مضاف في إعدادات Vercel Environment Variables.' });
     }
 
-    // القائمة المعتمدة للنماذج المتاحة
-    const models = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    // 2. تجربة النماذج المعتمدة والمتاحة لعام 2026
+    const models = [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
+    ];
+
+    let debugDetails = [];
 
     for (const model of models) {
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }]
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [{ text: prompt }]
+                        }
+                    ]
                 })
             });
 
             const data = await response.json();
 
-            // إذا نجح الطلب نرجع النتيجة مباشرة
-            if (response.ok && data.candidates) {
+            // في حال نجاح الاستجابة
+            if (response.ok && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
                 return res.status(200).json(data);
+            } 
+            
+            // تسجيل الخطأ للمساعدة في التتبع
+            if (data.error) {
+                debugDetails.push(`[${model}]: ${data.error.message}`);
             }
         } catch (err) {
-            // في حال فشل النموذج الحالي ننتقل للنموذج التالي في القائمة
-            continue;
+            debugDetails.push(`[${model} Exception]: ${err.message}`);
         }
     }
 
-    // إذا فشلت جميع المحاولات
-    return res.status(500).json({ error: 'فشل الاتصال بجميع نماذج Gemini المتاحة. تأكد من إعدادات المفتاح.' });
+    // 3. إرجاع سبب الفشل التفصيلي من جوجل لتحديد المشكلة بدقة
+    return res.status(500).json({ 
+        error: `تعذر الاتصال بـ Gemini API. التفاصيل: ${debugDetails.join(' | ')}` 
+    });
 }
