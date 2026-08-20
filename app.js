@@ -9,8 +9,7 @@ function addExpense() {
 
     if (isNaN(amount) || amount <= 0) return;
 
-    const newExpense = { id: Date.now(), type, amount };
-    expenses.push(newExpense);
+    expenses.push({ id: Date.now(), type, amount });
     amountInput.value = '';
     renderExpenses();
 }
@@ -64,12 +63,8 @@ function calculateFinance() {
         
         recDiv.className = "p-6 rounded-2xl border border-red-200 bg-red-50/50 text-red-950 space-y-2";
         recDiv.innerHTML = `
-            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-triangle-exclamation text-red-500 ml-1"></i> خطة معالجة العجز المالي</h3>
-            <p class="text-sm">مصروفاتك تتجاوز دخلك بمقدار <strong>${Math.abs(remaining).toFixed(2)}</strong>.</p>
-            <ul class="list-disc list-inside text-sm space-y-1 pt-2">
-                <li>قلص المصاريف الثانوية فوراً وركز على الأساسيات فقط.</li>
-                <li>تواصل لإعادة جدولة القروض والالتزامات الثابتة إن أمكن.</li>
-            </ul>
+            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-triangle-exclamation text-red-500 ml-1"></i> تنبيه العجز المالي</h3>
+            <p class="text-sm">المصروفات الثابتة تزيد عن الدخل بمقدار <strong>${Math.abs(remaining).toFixed(2)}</strong>. يُنصح بمراجعة البنود لتقليل التكاليف بأسرع وقت.</p>
         `;
     } else {
         statusBox.className = "p-5 rounded-2xl shadow-md text-center bg-emerald-50 text-emerald-600 border border-emerald-100";
@@ -80,54 +75,52 @@ function calculateFinance() {
 
         recDiv.className = "p-6 rounded-2xl border border-emerald-200 bg-emerald-50/50 text-emerald-950 space-y-2";
         recDiv.innerHTML = `
-            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-chart-line text-emerald-600 ml-1"></i> خطة التوزيع الاستثماري</h3>
-            <p class="text-sm">لديك فائض بقيمة <strong>${remaining.toFixed(2)}</strong>. التوزيع الموصى به:</p>
+            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-chart-line text-emerald-600 ml-1"></i> توزيع الفائض المقترح</h3>
+            <p class="text-sm">يوجد فائض بقيمة <strong>${remaining.toFixed(2)}</strong>. التوزيع المالي المقترح:</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>📈 ادخار/استثمار (40%):</strong> ${invest}</div>
-                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>🛍️ مصاريف متغيرة (60%):</strong> ${flex}</div>
+                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>📈 ادخار واستثمار (40%):</strong> ${invest}</div>
+                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>🛍️ مصاريف شخصية (60%):</strong> ${flex}</div>
             </div>
         `;
     }
 }
 
-// الربط مع Gemini API
 async function askGemini() {
-    const apiKey = document.getElementById('apiKey').value;
     const aiResponseDiv = document.getElementById('aiResponse');
     const aiBtn = document.getElementById('aiBtn');
-
-    if (!apiKey) {
-        alert("يرجى إدخال مفتاح Gemini API أولاً للاستفادة من التحليل الذكي.");
-        return;
-    }
 
     const income = parseFloat(document.getElementById('income').value) || 0;
     const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
     const expenseDetails = expenses.map(e => `${e.type}: ${e.amount}`).join(', ');
 
-    const prompt = `أنا مستشار مالي. الراتب: ${income}، المصاريف الثابتة الإجمالية: ${totalExpenses}. التفاصيل: [${expenseDetails}]. قدم تحليل مالي مختصر وعملي جداً في 3 نقاط باللغة العربية (كيفية إدارة الوضع أو تحسين الاستثمار).`;
+    if (income <= 0) {
+        alert("يرجى إدخال الراتب أولاً!");
+        return;
+    }
+
+    const prompt = `أنا مستشار مالي. الراتب: ${income}، إجمالي المصاريف الثابتة: ${totalExpenses}. التفاصيل: [${expenseDetails}]. قدم تحليل مالي مختصر جداً في 3 نقاط باللغة العربية.`;
 
     aiBtn.disabled = true;
     aiBtn.innerText = "جاري التحليل...";
-    aiResponseDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-purple-600"></i> يتم التواصل مع Gemini...';
+    aiResponseDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-purple-600"></i> جاري الاتصال بالذكاء الاصطناعي...';
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ prompt })
         });
 
         const data = await response.json();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
+
+        if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
             aiResponseDiv.innerText = data.candidates[0].content.parts[0].text;
         } else {
-            aiResponseDiv.innerText = "حدث خطأ في استجابة الذكاء الاصطناعي، يرجى التأكد من صحة الـ API Key.";
+            const errorMsg = data.error || "خطأ غير معروف، تأكد من GEMINI_API_KEY على Vercel";
+            aiResponseDiv.innerHTML = `<span class="text-red-500 font-bold">${errorMsg}</span>`;
         }
     } catch (err) {
-        aiResponseDiv.innerText = "تعذر الاتصال بـ Gemini API. تأكد من إدخال مفتاح صحيح ومن الاتصال بالإنترنت.";
+        aiResponseDiv.innerHTML = '<span class="text-red-500 font-bold">تعذر الاتصال بالخادم. حاول مرة أخرى.</span>';
     } finally {
         aiBtn.disabled = false;
         aiBtn.innerText = "توليد تحليل ذكي";
