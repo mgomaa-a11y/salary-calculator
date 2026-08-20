@@ -92,17 +92,32 @@ async function askGemini() {
     const income = parseFloat(document.getElementById('income').value) || 0;
     const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
     const expenseDetails = expenses.map(e => `${e.type}: ${e.amount}`).join(', ');
+    const remaining = income - totalExpenses;
 
     if (income <= 0) {
         alert("يرجى إدخال الراتب أولاً!");
         return;
     }
 
-    const prompt = `أنا مستشار مالي. الراتب: ${income}، إجمالي المصاريف الثابتة: ${totalExpenses}. التفاصيل: [${expenseDetails}]. قدم تحليل مالي مختصر جداً في 3 نقاط باللغة العربية.`;
+    const prompt = `
+بصفتك مستشاراً مالياً وخبيراً في التخطيط الاستثماري، حلل الوضع المالي التالي واصنع خطة عملية مزمنة ومحددة بخطوات متسلسلة:
+- صافي الدخل الشهري: ${income}
+- إجمالي المصاريف الثابتة: ${totalExpenses}
+- التفاصيل: [${expenseDetails}]
+- الصافي المتبقي (الفائض/العجز): ${remaining}
+
+المطلوب:
+صغ خطة مالية إستراتيجية واضحة ومقسّمة حسب الفترات الزمنية التالية:
+1. **المرحلة العاجلة (الشهر 1 - الشهر 3):** خطوات إجرائية فورية (سواء لسد العجز أو لبناء النواة الأولى لصندوق الطوارئ).
+2. **المرحلة المتوسطة (الشهر 3 - الشهر 12):** خطوات الاستقرار (تحسين بنود المصاريف، تكوين الأمان المالي، وبدء الاستثمار المباشر).
+3. **المرحلة طويلة الأجل (من السنتين إلى 5 سنوات):** استراتيجية نمو الثروة والاستثمار التراكمي (توزيع الأصول، صناديق المؤشرات، والوصول للحرية المالية).
+
+قم بصياغة الإجابة باستخدام تنسيق Markdown ممتاز (استخدم العناوين، النقاط، والنصوص العريضة) واجعل الأرقام والحسابات دقيقة بالاعتماد على بيانات الميزانية المرفقة.
+`;
 
     aiBtn.disabled = true;
-    aiBtn.innerText = "جاري التحليل...";
-    aiResponseDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-purple-600"></i> جاري الاتصال بالذكاء الاصطناعي...';
+    aiBtn.innerText = "جاري إعداد الخطة...";
+    aiResponseDiv.innerHTML = '<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-purple-600 text-2xl"></i><p class="text-xs text-slate-500 mt-2">جاري تحليل البيانات وبناء الخطة المزمنة...</p></div>';
 
     try {
         const response = await fetch('/api/gemini', {
@@ -114,7 +129,8 @@ async function askGemini() {
         const data = await response.json();
 
         if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
-            aiResponseDiv.innerText = data.candidates[0].content.parts[0].text;
+            const rawText = data.candidates[0].content.parts[0].text;
+            aiResponseDiv.innerHTML = marked.parse(rawText);
         } else {
             const errorMsg = data.error || "خطأ غير معروف، تأكد من GEMINI_API_KEY على Vercel";
             aiResponseDiv.innerHTML = `<span class="text-red-500 font-bold">${errorMsg}</span>`;
@@ -123,6 +139,6 @@ async function askGemini() {
         aiResponseDiv.innerHTML = '<span class="text-red-500 font-bold">تعذر الاتصال بالخادم. حاول مرة أخرى.</span>';
     } finally {
         aiBtn.disabled = false;
-        aiBtn.innerText = "توليد تحليل ذكي";
+        aiBtn.innerText = "توليد خطة مالية مزمنة";
     }
 }
