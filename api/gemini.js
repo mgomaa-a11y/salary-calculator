@@ -6,16 +6,15 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // 1. التحقق من وجود المفتاح في بيئة Vercel
     if (!apiKey) {
-        return res.status(500).json({ error: 'مفتاح GEMINI_API_KEY غير مضاف في إعدادات Vercel Environment Variables.' });
+        return res.status(500).json({ error: 'مفتاح GEMINI_API_KEY غير مضاف في إعدادات Vercel.' });
     }
 
-    // 2. تجربة النماذج المعتمدة والمتاحة لعام 2026
+    // القائمة المحدثة للنماذج لعام 2026 بناءً على التوصية المباشرة من Google API
     const models = [
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
+        'gemini-3.6-flash',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash'
     ];
 
     let debugDetails = [];
@@ -39,12 +38,10 @@ export default async function handler(req, res) {
 
             const data = await response.json();
 
-            // في حال نجاح الاستجابة
             if (response.ok && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
                 return res.status(200).json(data);
             } 
             
-            // تسجيل الخطأ للمساعدة في التتبع
             if (data.error) {
                 debugDetails.push(`[${model}]: ${data.error.message}`);
             }
@@ -53,7 +50,6 @@ export default async function handler(req, res) {
         }
     }
 
-    // 3. إرجاع سبب الفشل التفصيلي من جوجل لتحديد المشكلة بدقة
     return res.status(500).json({ 
         error: `تعذر الاتصال بـ Gemini API. التفاصيل: ${debugDetails.join(' | ')}` 
     });
