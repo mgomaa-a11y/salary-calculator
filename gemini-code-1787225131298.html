@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة الراتب والخطة المالية</title>
+    <!-- Tailwind CSS للتصميم -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Tajawal', sans-serif; } </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">الحاسبة المالية الذكية</h1>
+        
+        <!-- المدخلات -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">الراتب الشهري (صافي الدخل)</label>
+                <input type="number" id="income" placeholder="مثال: 10000" class="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">مجموع المصروفات الثابتة (إيجار، فواتير، أقساط)</label>
+                <input type="number" id="expenses" placeholder="مثال: 6000" class="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <button onclick="calculateFinance()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">تحليل الوضع المالي</button>
+        </div>
+
+        <!-- النتائج -->
+        <div id="results" class="mt-8 hidden border-t pt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">الملخص المالي</h2>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600">المبلغ المتبقي</p>
+                    <p id="remainingAmount" class="text-xl font-bold text-blue-600">0</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600">إمكانية التوفير</p>
+                    <p id="savingStatus" class="text-xl font-bold text-green-600">-</p>
+                </div>
+            </div>
+
+            <!-- الخطة المالية المقترحة -->
+            <div id="planSection" class="space-y-3">
+                <h3 class="font-bold text-gray-700">الخطة المالية المقترحة للمتبقي (قاعدة 50/30/20 المعدلة)</h3>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li class="p-3 bg-gray-50 rounded flex justify-between">
+                        <span>المصاريف المتغيرة والرفاهية:</span>
+                        <strong id="flexExpenses">0</strong>
+                    </li>
+                    <li class="p-3 bg-gray-50 rounded flex justify-between">
+                        <span>ادخار/استثمار طويل الأجل:</span>
+                        <strong id="investmentAmount">0</strong>
+                    </li>
+                </ul>
+                <div id="advice" class="p-4 rounded-lg text-sm mt-4"></div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
