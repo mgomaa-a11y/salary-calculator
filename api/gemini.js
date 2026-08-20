@@ -10,7 +10,6 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'مفتاح GEMINI_API_KEY غير مضاف في إعدادات Vercel.' });
     }
 
-    // القائمة المحدثة للنماذج لعام 2026 بناءً على التوصية المباشرة من Google API
     const models = [
         'gemini-3.6-flash',
         'gemini-2.5-flash',
