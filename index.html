@@ -3,69 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الحاسبة المالية المتقدمة</title>
+    <title>المستشار المالي الذكي</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Tajawal', sans-serif; } </style>
+    <!-- مكتبة الأنيميشن FontAwesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+    </style>
 </head>
-<body class="bg-gray-100 p-4 md:p-8">
-    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">الحاسبة المالية وإدارة الميزانية</h1>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 min-h-screen p-4 md:p-8 text-slate-800">
+
+    <div class="max-w-4xl mx-auto glass rounded-3xl shadow-2xl overflow-hidden border border-white/20 animate__animated animate__fadeIn">
         
-        <!-- صافي الدخل -->
-        <div class="mb-6">
-            <label class="block text-sm font-bold text-gray-700 mb-2">الراتب الشهري (صافي الدخل)</label>
-            <input type="number" id="income" placeholder="أدخل راتبك الشهري" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+        <!-- الهيدر -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 md:p-8 text-white text-center relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2"><i class="fa-solid fa-wallet text-yellow-400 ml-2"></i> المستشار المالي الذكي</h1>
+            <p class="text-blue-100 text-sm md:text-base">تحليل ميزانيتك وبناء خطة استثمارية بواسطة Gemini AI</p>
         </div>
 
-        <!-- إضافة المصروفات -->
-        <div class="bg-gray-50 p-4 rounded-lg mb-6 border">
-            <h2 class="text-lg font-bold text-gray-700 mb-3">المصروفات الأساسية الشهرية</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                <select id="expenseType" class="p-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="سكن (إيجار/تمويل)">سكن (إيجار/تمويل)</option>
-                    <option value="فواتير (كهرباء/ماء/إنترنت)">فواتير (كهرباء/ماء/إنترنت)</option>
-                    <option value="أقساط قروض/ديون">أقساط قروض/ديون</option>
-                    <option value="غذاء ومؤن منزلية">غذاء ومؤن منزلية</option>
-                    <option value="مواصلات/بنزين">مواصلات/بنزين</option>
-                    <option value="تعليم ورعاية أبناء">تعليم ورعاية أبناء</option>
-                    <option value="تأمين (صحي/سيارة)">تأمين (صحي/سيارة)</option>
-                    <option value="مصروف آخر">مصروف آخر</option>
-                </select>
-                <input type="number" id="expenseAmount" placeholder="المبلغ" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                <button onclick="addExpense()" class="bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">إضافة +</button>
-            </div>
-
-            <!-- قائمة المصاريف المضافة -->
-            <ul id="expenseList" class="space-y-2 max-h-48 overflow-y-auto mt-4 border-t pt-3">
-                <li class="text-sm text-gray-500 text-center py-2" id="emptyMsg">لم يتم إضافة مصاريف بعد</li>
-            </ul>
-        </div>
-
-        <button onclick="calculateFinance()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">تحليل الوضع المالي والخطة</button>
-
-        <!-- النتائج والاقتراحات -->
-        <div id="results" class="mt-8 hidden border-t pt-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">التحليل المالي</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-gray-100 p-4 rounded-lg text-center">
-                    <p class="text-xs text-gray-600">إجمالي المصاريف</p>
-                    <p id="totalExpensesText" class="text-lg font-bold text-gray-800">0</p>
+        <div class="p-6 md:p-8 space-y-8">
+            
+            <!-- إدخال الراتب ومفتاح API -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <label class="block text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-money-bill-wave text-green-600 ml-1"></i> صافي الدخل الشهري</label>
+                    <input type="number" id="income" placeholder="0.00" class="w-full p-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-lg text-slate-800 transition">
                 </div>
-                <div class="bg-blue-50 p-4 rounded-lg text-center">
-                    <p class="text-xs text-gray-600">الصافي المتبقي</p>
-                    <p id="remainingAmount" class="text-lg font-bold text-blue-600">0</p>
-                </div>
-                <div id="statusBox" class="p-4 rounded-lg text-center">
-                    <p class="text-xs text-gray-600">حالة الميزانية</p>
-                    <p id="savingStatus" class="text-lg font-bold">-</p>
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <label class="block text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-key text-amber-500 ml-1"></i> Gemini API Key (اختياري للتحليل الذكي)</label>
+                    <input type="password" id="apiKey" placeholder="أدخل مفتاح Gemini API" class="w-full p-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition">
                 </div>
             </div>
 
-            <!-- التوصيات والاقتراحات العملية -->
-            <div id="recommendations" class="p-5 rounded-lg border"></div>
+            <!-- إضافة المصاريف -->
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center"><i class="fa-solid fa-list-check text-indigo-600 ml-2"></i> بند المصروفات الثابتة</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4">
+                    <div class="md:col-span-5">
+                        <select id="expenseType" class="w-full p-3 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700">
+                            <option value="السكن والإيجار">🏠 السكن والإيجار</option>
+                            <option value="الفواتير والإنترنت">⚡ الفواتير والإنترنت</option>
+                            <option value="أقساط وديون">💳 أقساط وديون</option>
+                            <option value="المقاضي والمؤن">🛒 المقاضي والمؤن</option>
+                            <option value="المواصلاة والبنزين">🚗 المواصلات والبنزين</option>
+                            <option value="التعليم والمدارس">🎓 التعليم والمدارس</option>
+                            <option value="مصروف آخر">📌 مصروف آخر</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-4">
+                        <input type="number" id="expenseAmount" placeholder="المبلغ" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="md:col-span-3">
+                        <button onclick="addExpense()" class="w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md hover:shadow-lg transform active:scale-95">إضافة +</button>
+                    </div>
+                </div>
+
+                <!-- قائمة المصروفات المضافة -->
+                <div id="expenseList" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                    <p class="text-sm text-slate-400 text-center py-4" id="emptyMsg">لم تقم بإضافة أي مصاريف حتى الآن</p>
+                </div>
+            </div>
+
+            <!-- زر الحساب -->
+            <button onclick="calculateFinance()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-4 rounded-2xl shadow-xl transition transform active:scale-98 text-lg">
+                <i class="fa-solid fa-chart-pie ml-2"></i> تحليل الميزانية
+            </button>
+
+            <!-- منطقة النتائج -->
+            <div id="results" class="hidden space-y-6 animate__animated animate__fadeInUp">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-md text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase">إجمالي المصاريف</p>
+                        <p id="totalExpensesText" class="text-2xl font-black text-slate-800 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-md text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase">الصافي المتبقي</p>
+                        <p id="remainingAmount" class="text-2xl font-black text-blue-600 mt-1">0</p>
+                    </div>
+                    <div id="statusBox" class="p-5 rounded-2xl shadow-md text-center">
+                        <p class="text-xs font-bold text-slate-500 uppercase">حالة الميزانية</p>
+                        <p id="savingStatus" class="text-2xl font-black mt-1">-</p>
+                    </div>
+                </div>
+
+                <!-- التحليل والاستراتيجية -->
+                <div id="recommendations" class="p-6 rounded-2xl border shadow-sm space-y-3"></div>
+
+                <!-- قسم الذكاء الاصطناعي Gemini -->
+                <div class="bg-gradient-to-r from-purple-900/10 to-indigo-900/10 p-6 rounded-2xl border border-purple-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-purple-900 flex items-center"><i class="fa-solid fa-wand-magic-sparkles text-purple-600 ml-2"></i> استشارة الذكاء الاصطناعي (Gemini)</h3>
+                        <button onclick="askGemini()" id="aiBtn" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-4 rounded-xl transition shadow">
+                            توليد تحليل ذكي
+                        </button>
+                    </div>
+                    <div id="aiResponse" class="text-sm text-slate-700 leading-relaxed min-h-[50px]">
+                        اضغط على "توليد تحليل ذكي" للحصول على مراجعة احترافية مخصصة لوضعك المالي عبر Gemini AI.
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
+
     <script src="app.js"></script>
 </body>
 </html>
