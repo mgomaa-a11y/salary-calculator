@@ -1,123 +1,150 @@
-let expenses = [];
+let incomes = JSON.parse(localStorage.getItem('user_incomes')) || [];
+let expenses = JSON.parse(localStorage.getItem('user_expenses')) || [];
 
+document.addEventListener('DOMContentLoaded', () => {
+    renderAll();
+});
+
+function saveData() {
+    localStorage.setItem('user_incomes', JSON.stringify(incomes));
+    localStorage.setItem('user_expenses', JSON.stringify(expenses));
+    renderAll();
+}
+
+function clearAllData() {
+    if (confirm("هل أنت تأكد من رغبتك في حذف جميع البيانات وإعادة الضبط؟")) {
+        incomes = [];
+        expenses = [];
+        saveData();
+    }
+}
+
+// التبديل بين الأقسام
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('active', 'bg-indigo-600', 'text-white');
+        el.classList.add('text-slate-300');
+    });
+
+    document.getElementById(tabId).classList.remove('hidden');
+    const activeBtn = document.getElementById('btn' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+    activeBtn.classList.add('active');
+}
+
+// إضافة إيراد
+function addIncome() {
+    const source = document.getElementById('incomeSource').value || 'دخل إضافي';
+    const amount = parseFloat(document.getElementById('incomeAmount').value);
+
+    if (isNaN(amount) || amount <= 0) return;
+
+    incomes.push({ id: Date.now(), source, amount });
+    document.getElementById('incomeSource').value = '';
+    document.getElementById('incomeAmount').value = '';
+    saveData();
+}
+
+function removeIncome(id) {
+    incomes = incomes.filter(i => i.id !== id);
+    saveData();
+}
+
+// إضافة مصروف
 function addExpense() {
-    const typeSelect = document.getElementById('expenseType');
-    const amountInput = document.getElementById('expenseAmount');
-    
-    const type = typeSelect.value;
-    const amount = parseFloat(amountInput.value);
+    const type = document.getElementById('expenseType').value;
+    const amount = parseFloat(document.getElementById('expenseAmount').value);
 
     if (isNaN(amount) || amount <= 0) return;
 
     expenses.push({ id: Date.now(), type, amount });
-    amountInput.value = '';
-    renderExpenses();
+    document.getElementById('expenseAmount').value = '';
+    saveData();
 }
 
 function removeExpense(id) {
-    expenses = expenses.filter(item => item.id !== id);
-    renderExpenses();
+    expenses = expenses.filter(e => e.id !== id);
+    saveData();
 }
 
-function renderExpenses() {
-    const listElem = document.getElementById('expenseList');
-    if (expenses.length === 0) {
-        listElem.innerHTML = '<p class="text-sm text-slate-400 text-center py-4" id="emptyMsg">لم تقم بإضافة أي مصاريف حتى الآن</p>';
-        return;
-    }
+// إعادة رسم القوائم والحسابات
+function renderAll() {
+    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
+    const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+    const remaining = totalIncome - totalExpenses;
 
-    listElem.innerHTML = expenses.map(item => `
-        <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm animate__animated animate__fadeIn">
-            <span class="text-sm font-semibold text-slate-700">${item.type}</span>
-            <div class="flex items-center gap-3">
-                <span class="font-bold text-slate-800">${item.amount.toFixed(2)}</span>
-                <button onclick="removeExpense(${item.id})" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
+    document.getElementById('totalIncomeHeader').innerText = totalIncome.toFixed(2);
+    document.getElementById('totalExpensesHeader').innerText = totalExpenses.toFixed(2);
+    document.getElementById('remainingHeader').innerText = remaining.toFixed(2);
 
-function calculateFinance() {
-    const income = parseFloat(document.getElementById('income').value);
-    const resultsDiv = document.getElementById('results');
-
-    if (isNaN(income) || income <= 0) {
-        alert("يرجى إدخال الراتب بشكل صحيح");
-        return;
-    }
-
-    const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
-    const remaining = income - totalExpenses;
-
-    document.getElementById('totalExpensesText').innerText = totalExpenses.toFixed(2);
-    document.getElementById('remainingAmount').innerText = Math.abs(remaining).toFixed(2);
-    resultsDiv.classList.remove('hidden');
-
-    const statusBox = document.getElementById('statusBox');
-    const savingStatus = document.getElementById('savingStatus');
-    const recDiv = document.getElementById('recommendations');
-
-    if (remaining < 0) {
-        statusBox.className = "p-5 rounded-2xl shadow-md text-center bg-red-50 text-red-600 border border-red-100";
-        savingStatus.innerText = "عجز مالي";
-        
-        recDiv.className = "p-6 rounded-2xl border border-red-200 bg-red-50/50 text-red-950 space-y-2";
-        recDiv.innerHTML = `
-            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-triangle-exclamation text-red-500 ml-1"></i> تنبيه العجز المالي</h3>
-            <p class="text-sm">المصروفات الثابتة تزيد عن الدخل بمقدار <strong>${Math.abs(remaining).toFixed(2)}</strong>. يُنصح بمراجعة البنود لتقليل التكاليف بأسرع وقت.</p>
-        `;
+    // قائمة الدخل
+    const incomeList = document.getElementById('incomeList');
+    if (incomes.length === 0) {
+        incomeList.innerHTML = '<p class="text-slate-500 text-xs py-2">لا توجد إيرادات مسجلة.</p>';
     } else {
-        statusBox.className = "p-5 rounded-2xl shadow-md text-center bg-emerald-50 text-emerald-600 border border-emerald-100";
-        savingStatus.innerText = "فائض ممتاز";
-
-        const invest = (remaining * 0.40).toFixed(2);
-        const flex = (remaining * 0.60).toFixed(2);
-
-        recDiv.className = "p-6 rounded-2xl border border-emerald-200 bg-emerald-50/50 text-emerald-950 space-y-2";
-        recDiv.innerHTML = `
-            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-chart-line text-emerald-600 ml-1"></i> توزيع الفائض المقترح</h3>
-            <p class="text-sm">يوجد فائض بقيمة <strong>${remaining.toFixed(2)}</strong>. التوزيع المالي المقترح:</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>📈 ادخار واستثمار (40%):</strong> ${invest}</div>
-                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>🛍️ مصاريف شخصية (60%):</strong> ${flex}</div>
+        incomeList.innerHTML = incomes.map(i => `
+            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700/60 text-white text-sm">
+                <span>${i.source}</span>
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-emerald-400">${i.amount.toFixed(2)}</span>
+                    <button onclick="removeIncome(${i.id})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
             </div>
-        `;
+        `).join('');
+    }
+
+    // قائمة المصاريف
+    const expenseList = document.getElementById('expenseList');
+    if (expenses.length === 0) {
+        expenseList.innerHTML = '<p class="text-slate-500 text-xs py-2">لا توجد مصروفات مسجلة.</p>';
+    } else {
+        expenseList.innerHTML = expenses.map(e => `
+            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-700/60 text-white text-sm">
+                <span>${e.type}</span>
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-rose-400">${e.amount.toFixed(2)}</span>
+                    <button onclick="removeExpense(${e.id})" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
+// استدعاء Gemini AI
 async function askGemini() {
     const aiResponseDiv = document.getElementById('aiResponse');
     const aiBtn = document.getElementById('aiBtn');
 
-    const income = parseFloat(document.getElementById('income').value) || 0;
-    const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
-    const expenseDetails = expenses.map(e => `${e.type}: ${e.amount}`).join(', ');
-    const remaining = income - totalExpenses;
+    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
+    const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+    const remaining = totalIncome - totalExpenses;
 
-    if (income <= 0) {
-        alert("يرجى إدخال الراتب أولاً!");
+    if (totalIncome <= 0) {
+        alert("يرجى إضافة إيراد أو راتب شهري أولاً!");
         return;
     }
 
+    const incomeDetails = incomes.map(i => `${i.source}: ${i.amount}`).join(', ');
+    const expenseDetails = expenses.map(e => `${e.type}: ${e.amount}`).join(', ');
+
     const prompt = `
 بصفتك مستشاراً مالياً وخبيراً في التخطيط الاستثماري، حلل الوضع المالي التالي واصنع خطة عملية مزمنة ومحددة بخطوات متسلسلة:
-- صافي الدخل الشهري: ${income}
-- إجمالي المصاريف الثابتة: ${totalExpenses}
-- التفاصيل: [${expenseDetails}]
-- الصافي المتبقي (الفائض/العجز): ${remaining}
+- إجمالي الدخل الشهري: ${totalIncome} (التفاصيل: [${incomeDetails}])
+- إجمالي المصاريف الثابتة: ${totalExpenses} (التفاصيل: [${expenseDetails}])
+- الصافي المتبقي: ${remaining}
 
 المطلوب:
 صغ خطة مالية إستراتيجية واضحة ومقسّمة حسب الفترات الزمنية التالية:
-1. **المرحلة العاجلة (الشهر 1 - الشهر 3):** خطوات إجرائية فورية (سواء لسد العجز أو لبناء النواة الأولى لصندوق الطوارئ).
-2. **المرحلة المتوسطة (الشهر 3 - الشهر 12):** خطوات الاستقرار (تحسين بنود المصاريف، تكوين الأمان المالي، وبدء الاستثمار المباشر).
-3. **المرحلة طويلة الأجل (من السنتين إلى 5 سنوات):** استراتيجية نمو الثروة والاستثمار التراكمي (توزيع الأصول، صناديق المؤشرات، والوصول للحرية المالية).
+1. **المرحلة العاجلة (الشهر 1 - الشهر 3):** خطوات إجرائية فورية (سواء لسد العجز أو لبناء صندوق الطوارئ).
+2. **المرحلة المتوسطة (الشهر 3 - الشهر 12):** خطوات الاستقرار المالي وبدء الادخار المستهدف.
+3. **المرحلة طويلة الأجل (من السنتين إلى 5 سنوات):** استراتيجية نمو الثروة والاستثمار التراكمي.
 
-قم بصياغة الإجابة باستخدام تنسيق Markdown ممتاز (استخدم العناوين، النقاط، والنصوص العريضة) واجعل الأرقام والحسابات دقيقة بالاعتماد على بيانات الميزانية المرفقة.
+قم بصياغة الإجابة باستخدام تنسيق Markdown ممتاز مع استخدام العناوين والنقاط المباشرة.
 `;
 
     aiBtn.disabled = true;
-    aiBtn.innerText = "جاري إعداد الخطة...";
-    aiResponseDiv.innerHTML = '<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-purple-600 text-2xl"></i><p class="text-xs text-slate-500 mt-2">جاري تحليل البيانات وبناء الخطة المزمنة...</p></div>';
+    aiBtn.innerText = "جاري التحليل...";
+    aiResponseDiv.innerHTML = '<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-purple-600 text-2xl"></i><p class="text-xs text-slate-500 mt-2">جاري بناء الخطة المالية المزمنة...</p></div>';
 
     try {
         const response = await fetch('/api/gemini', {
@@ -129,16 +156,67 @@ async function askGemini() {
         const data = await response.json();
 
         if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
-            const rawText = data.candidates[0].content.parts[0].text;
-            aiResponseDiv.innerHTML = marked.parse(rawText);
+            aiResponseDiv.innerHTML = marked.parse(data.candidates[0].content.parts[0].text);
         } else {
-            const errorMsg = data.error || "خطأ غير معروف، تأكد من GEMINI_API_KEY على Vercel";
-            aiResponseDiv.innerHTML = `<span class="text-red-500 font-bold">${errorMsg}</span>`;
+            aiResponseDiv.innerHTML = `<span class="text-red-500 font-bold">${data.error || 'فشل توليد التقرير'}</span>`;
         }
     } catch (err) {
-        aiResponseDiv.innerHTML = '<span class="text-red-500 font-bold">تعذر الاتصال بالخادم. حاول مرة أخرى.</span>';
+        aiResponseDiv.innerHTML = '<span class="text-red-500 font-bold">حدث خطأ في الاتصال بالسيرفر.</span>';
     } finally {
         aiBtn.disabled = false;
         aiBtn.innerText = "توليد خطة مالية مزمنة";
     }
+}
+
+// دالة تصدير PDF
+function exportToPDF() {
+    const element = document.getElementById('aiResponseContainer');
+    const opt = {
+        margin:       0.5,
+        filename:     'الخطة_المالية_الشخصية.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+}
+
+// دالة تصدير Excel (CSV)
+function exportToExcel() {
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += "النوع,البيان / المصدر,المبلغ\n";
+
+    incomes.forEach(i => {
+        csvContent += `إيراد,${i.source},${i.amount}\n`;
+    });
+    expenses.forEach(e => {
+        csvContent += `مصروف,${e.type},${e.amount}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "الميزانية_الشخصية.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// دالة تصدير Word
+function exportToWord() {
+    const content = document.getElementById('aiResponseContainer').innerHTML;
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+        "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+        "xmlns='http://www.w3.org/TR/REC-html40'>"+
+        "<head><meta charset='utf-8'><title>الخطة المالية</title></head><body dir='rtl'>";
+    const footer = "</body></html>";
+    const sourceHTML = header + content + footer;
+
+    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    const fileDownload = document.createElement("a");
+    document.body.appendChild(fileDownload);
+    fileDownload.href = source;
+    fileDownload.download = 'الخطة_المالية_الشخصية.doc';
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
 }
