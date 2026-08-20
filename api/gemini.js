@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        return res.status(500).json({ error: 'لم يتم العثور على API Key في إعدادات Vercel' });
+        return res.status(500).json({ error: 'GEMINI_API_KEY is missing in Vercel settings.' });
     }
 
     try {
@@ -15,13 +15,20 @@ export default async function handler(req, res) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
             })
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: data.error?.message || 'Gemini API call failed.' });
+        }
+
         return res.status(200).json(data);
     } catch (error) {
-        return res.status(500).json({ error: 'فشل الاتصال بـ Gemini API' });
+        return res.status(500).json({ error: 'Server connection failed.' });
     }
 }
