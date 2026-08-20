@@ -7,12 +7,10 @@ function addExpense() {
     const type = typeSelect.value;
     const amount = parseFloat(amountInput.value);
 
-    if (isNaN(amount) || amount <= 0) {
-        alert("يرجى إدخال قيمة صحيحة للمصروف");
-        return;
-    }
+    if (isNaN(amount) || amount <= 0) return;
 
-    expenses.push({ id: Date.now(), type, amount });
+    const newExpense = { id: Date.now(), type, amount };
+    expenses.push(newExpense);
     amountInput.value = '';
     renderExpenses();
 }
@@ -25,15 +23,18 @@ function removeExpense(id) {
 function renderExpenses() {
     const listElem = document.getElementById('expenseList');
     if (expenses.length === 0) {
-        listElem.innerHTML = '<li class="text-sm text-gray-500 text-center py-2" id="emptyMsg">لم يتم إضافة مصاريف بعد</li>';
+        listElem.innerHTML = '<p class="text-sm text-slate-400 text-center py-4" id="emptyMsg">لم تقم بإضافة أي مصاريف حتى الآن</p>';
         return;
     }
 
     listElem.innerHTML = expenses.map(item => `
-        <li class="flex justify-between items-center bg-white p-2 px-3 rounded border text-sm">
-            <span><strong>${item.type}:</strong> ${item.amount.toFixed(2)}</span>
-            <button onclick="removeExpense(${item.id})" class="text-red-500 hover:text-red-700 font-bold">حذف</button>
-        </li>
+        <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm animate__animated animate__fadeIn">
+            <span class="text-sm font-semibold text-slate-700">${item.type}</span>
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-800">${item.amount.toFixed(2)}</span>
+                <button onclick="removeExpense(${item.id})" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        </div>
     `).join('');
 }
 
@@ -58,43 +59,77 @@ function calculateFinance() {
     const recDiv = document.getElementById('recommendations');
 
     if (remaining < 0) {
-        // حالة العجز المالي
-        statusBox.className = "p-4 rounded-lg text-center bg-red-100";
+        statusBox.className = "p-5 rounded-2xl shadow-md text-center bg-red-50 text-red-600 border border-red-100";
         savingStatus.innerText = "عجز مالي";
-        savingStatus.className = "text-lg font-bold text-red-600";
-
-        const deficit = Math.abs(remaining);
-        recDiv.className = "p-5 rounded-lg border border-red-200 bg-red-50 text-red-900 space-y-3";
+        
+        recDiv.className = "p-6 rounded-2xl border border-red-200 bg-red-50/50 text-red-950 space-y-2";
         recDiv.innerHTML = `
-            <h3 class="font-bold text-base border-b border-red-200 pb-2">خطوات عملية لسد العجز المالي (${deficit.toFixed(2)}):</h3>
-            <ul class="list-disc list-inside space-y-2 text-sm">
-                <li><strong>مراجعة بند السكن والأقساط:</strong> إذا كانت تكلفة السكن أو القروض تتجاوز 40% من دخل الدخل، يجب البحث عن إعادة جدولة القروض أو تقليل تكلفة السكن.</li>
-                <li><strong>إلغاء الاشتراكات غير الضرورية:</strong> إيقاف أي خدمات مدفوعة مؤقتاً لحين ضبط الميزانية.</li>
-                <li><strong>الحد من المصاريف المتغيرة:</strong> تطبيق قاعدة التقشف المؤقت على الغذاء الخارجي والترفيه حتى يغطي الدخل كافة المصاريف.</li>
-                <li><strong>زيادة الدخل:</strong> البحث عن مصدر دخل إضافي جزئي أو بيع أصول/أغراض غير مستخدمة لتغطية الفجوة.</li>
+            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-triangle-exclamation text-red-500 ml-1"></i> خطة معالجة العجز المالي</h3>
+            <p class="text-sm">مصروفاتك تتجاوز دخلك بمقدار <strong>${Math.abs(remaining).toFixed(2)}</strong>.</p>
+            <ul class="list-disc list-inside text-sm space-y-1 pt-2">
+                <li>قلص المصاريف الثانوية فوراً وركز على الأساسيات فقط.</li>
+                <li>تواصل لإعادة جدولة القروض والالتزامات الثابتة إن أمكن.</li>
             </ul>
         `;
     } else {
-        // حالة الفائض المالي
-        statusBox.className = "p-4 rounded-lg text-center bg-green-100";
+        statusBox.className = "p-5 rounded-2xl shadow-md text-center bg-emerald-50 text-emerald-600 border border-emerald-100";
         savingStatus.innerText = "فائض ممتاز";
-        savingStatus.className = "text-lg font-bold text-green-600";
 
-        const emergencyFund = (totalExpenses * 3).toFixed(2);
-        const investAmount = (remaining * 0.50).toFixed(2);
-        const flexAmount = (remaining * 0.50).toFixed(2);
+        const invest = (remaining * 0.40).toFixed(2);
+        const flex = (remaining * 0.60).toFixed(2);
 
-        recDiv.className = "p-5 rounded-lg border border-green-200 bg-green-50 text-green-900 space-y-3";
+        recDiv.className = "p-6 rounded-2xl border border-emerald-200 bg-emerald-50/50 text-emerald-950 space-y-2";
         recDiv.innerHTML = `
-            <h3 class="font-bold text-base border-b border-green-200 pb-2">خطة استغلال الفائض المالي (${remaining.toFixed(2)}):</h3>
-            <div class="space-y-3 text-sm">
-                <p><strong>1. بناء صندوق الطوارئ أولاً:</strong> يجب تأمين مبلغ <strong>${emergencyFund}</strong> (يعادل مصاريف 3 أشهر). ادخر كامل الفائض حتى تنتهي من بناء هذا الصندوق لحمايتك من أي أزمات.</p>
-                <p><strong>2. تقسيم الفائض بعد صندوق الطوارئ:</strong></p>
-                <ul class="list-disc list-inside space-y-1 pr-4">
-                    <li><strong>50% للاستثمار طويل الأجل (${investAmount}):</strong> ضخ هذا المبلغ شهرياً في صناديق المؤشرات مثل (S&P 500)، الأسهم ذات العوائد، أو الصناديق الاستثمارية المرخصة للاستفادة من الفائدة المركبة على المدى البعيد.</li>
-                    <li><strong>50% للمصاريف الشخصية والرفاهية (${flexAmount}):</strong> تُخصص للمتعة، السفر، والتسوق لضمان الاستمرارية بدون حرمان.</li>
-                </ul>
+            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-chart-line text-emerald-600 ml-1"></i> خطة التوزيع الاستثماري</h3>
+            <p class="text-sm">لديك فائض بقيمة <strong>${remaining.toFixed(2)}</strong>. التوزيع الموصى به:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>📈 ادخار/استثمار (40%):</strong> ${invest}</div>
+                <div class="bg-white p-3 rounded-xl border border-emerald-100 text-sm"><strong>🛍️ مصاريف متغيرة (60%):</strong> ${flex}</div>
             </div>
         `;
+    }
+}
+
+// الربط مع Gemini API
+async function askGemini() {
+    const apiKey = document.getElementById('apiKey').value;
+    const aiResponseDiv = document.getElementById('aiResponse');
+    const aiBtn = document.getElementById('aiBtn');
+
+    if (!apiKey) {
+        alert("يرجى إدخال مفتاح Gemini API أولاً للاستفادة من التحليل الذكي.");
+        return;
+    }
+
+    const income = parseFloat(document.getElementById('income').value) || 0;
+    const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+    const expenseDetails = expenses.map(e => `${e.type}: ${e.amount}`).join(', ');
+
+    const prompt = `أنا مستشار مالي. الراتب: ${income}، المصاريف الثابتة الإجمالية: ${totalExpenses}. التفاصيل: [${expenseDetails}]. قدم تحليل مالي مختصر وعملي جداً في 3 نقاط باللغة العربية (كيفية إدارة الوضع أو تحسين الاستثمار).`;
+
+    aiBtn.disabled = true;
+    aiBtn.innerText = "جاري التحليل...";
+    aiResponseDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-purple-600"></i> يتم التواصل مع Gemini...';
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            aiResponseDiv.innerText = data.candidates[0].content.parts[0].text;
+        } else {
+            aiResponseDiv.innerText = "حدث خطأ في استجابة الذكاء الاصطناعي، يرجى التأكد من صحة الـ API Key.";
+        }
+    } catch (err) {
+        aiResponseDiv.innerText = "تعذر الاتصال بـ Gemini API. تأكد من إدخال مفتاح صحيح ومن الاتصال بالإنترنت.";
+    } finally {
+        aiBtn.disabled = false;
+        aiBtn.innerText = "توليد تحليل ذكي";
     }
 }
