@@ -1,47 +1,100 @@
-function calculateFinance() {
-    const income = parseFloat(document.getElementById('income').value);
-    const expenses = parseFloat(document.getElementById('expenses').value);
-    const resultsDiv = document.getElementById('results');
+let expenses = [];
 
-    if (isNaN(income) || isNaN(expenses) || income <= 0) {
-        alert("يرجى إدخال أرقام صحيحة للراتب والمصروفات");
+function addExpense() {
+    const typeSelect = document.getElementById('expenseType');
+    const amountInput = document.getElementById('expenseAmount');
+    
+    const type = typeSelect.value;
+    const amount = parseFloat(amountInput.value);
+
+    if (isNaN(amount) || amount <= 0) {
+        alert("يرجى إدخال قيمة صحيحة للمصروف");
         return;
     }
 
-    const remaining = income - expenses;
-    const remainingAmountElem = document.getElementById('remainingAmount');
-    const savingStatusElem = document.getElementById('savingStatus');
-    const flexExpensesElem = document.getElementById('flexExpenses');
-    const investmentElem = document.getElementById('investmentAmount');
-    const adviceElem = document.getElementById('advice');
+    expenses.push({ id: Date.now(), type, amount });
+    amountInput.value = '';
+    renderExpenses();
+}
 
-    remainingAmountElem.innerText = remaining.toFixed(2);
+function removeExpense(id) {
+    expenses = expenses.filter(item => item.id !== id);
+    renderExpenses();
+}
+
+function renderExpenses() {
+    const listElem = document.getElementById('expenseList');
+    if (expenses.length === 0) {
+        listElem.innerHTML = '<li class="text-sm text-gray-500 text-center py-2" id="emptyMsg">لم يتم إضافة مصاريف بعد</li>';
+        return;
+    }
+
+    listElem.innerHTML = expenses.map(item => `
+        <li class="flex justify-between items-center bg-white p-2 px-3 rounded border text-sm">
+            <span><strong>${item.type}:</strong> ${item.amount.toFixed(2)}</span>
+            <button onclick="removeExpense(${item.id})" class="text-red-500 hover:text-red-700 font-bold">حذف</button>
+        </li>
+    `).join('');
+}
+
+function calculateFinance() {
+    const income = parseFloat(document.getElementById('income').value);
+    const resultsDiv = document.getElementById('results');
+
+    if (isNaN(income) || income <= 0) {
+        alert("يرجى إدخال الراتب بشكل صحيح");
+        return;
+    }
+
+    const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+    const remaining = income - totalExpenses;
+
+    document.getElementById('totalExpensesText').innerText = totalExpenses.toFixed(2);
+    document.getElementById('remainingAmount').innerText = Math.abs(remaining).toFixed(2);
     resultsDiv.classList.remove('hidden');
 
-    if (remaining <= 0) {
-        savingStatusElem.innerText = "غير ممكن (عجز مالي)";
-        savingStatusElem.className = "text-xl font-bold text-red-600";
-        flexExpensesElem.innerText = "0";
-        investmentElem.innerText = "0";
-        adviceElem.className = "p-4 rounded-lg text-sm mt-4 bg-red-100 text-red-800";
-        adviceElem.innerText = "مصروفاتك الثابتة تتجاوز دخل أو تساويه! يجب مراجعة المصاريف الثابتة وتقليل الأقساط أو الاشتراطات غير الضرورية فوراً.";
+    const statusBox = document.getElementById('statusBox');
+    const savingStatus = document.getElementById('savingStatus');
+    const recDiv = document.getElementById('recommendations');
+
+    if (remaining < 0) {
+        // حالة العجز المالي
+        statusBox.className = "p-4 rounded-lg text-center bg-red-100";
+        savingStatus.innerText = "عجز مالي";
+        savingStatus.className = "text-lg font-bold text-red-600";
+
+        const deficit = Math.abs(remaining);
+        recDiv.className = "p-5 rounded-lg border border-red-200 bg-red-50 text-red-900 space-y-3";
+        recDiv.innerHTML = `
+            <h3 class="font-bold text-base border-b border-red-200 pb-2">خطوات عملية لسد العجز المالي (${deficit.toFixed(2)}):</h3>
+            <ul class="list-disc list-inside space-y-2 text-sm">
+                <li><strong>مراجعة بند السكن والأقساط:</strong> إذا كانت تكلفة السكن أو القروض تتجاوز 40% من دخل الدخل، يجب البحث عن إعادة جدولة القروض أو تقليل تكلفة السكن.</li>
+                <li><strong>إلغاء الاشتراكات غير الضرورية:</strong> إيقاف أي خدمات مدفوعة مؤقتاً لحين ضبط الميزانية.</li>
+                <li><strong>الحد من المصاريف المتغيرة:</strong> تطبيق قاعدة التقشف المؤقت على الغذاء الخارجي والترفيه حتى يغطي الدخل كافة المصاريف.</li>
+                <li><strong>زيادة الدخل:</strong> البحث عن مصدر دخل إضافي جزئي أو بيع أصول/أغراض غير مستخدمة لتغطية الفجوة.</li>
+            </ul>
+        `;
     } else {
-        savingStatusElem.innerText = "ممكن ممتاز";
-        savingStatusElem.className = "text-xl font-bold text-green-600";
+        // حالة الفائض المالي
+        statusBox.className = "p-4 rounded-lg text-center bg-green-100";
+        savingStatus.innerText = "فائض ممتاز";
+        savingStatus.className = "text-lg font-bold text-green-600";
 
-        // تقسيم المتبقي: 60% مصاريف متغيرة/شخصية، 40% ادخار واستثمار طويل الأجل
-        const flex = remaining * 0.60;
-        const invest = remaining * 0.40;
+        const emergencyFund = (totalExpenses * 3).toFixed(2);
+        const investAmount = (remaining * 0.50).toFixed(2);
+        const flexAmount = (remaining * 0.50).toFixed(2);
 
-        flexExpensesElem.innerText = flex.toFixed(2);
-        investmentElem.innerText = invest.toFixed(2);
-
-        // النصائح الاستثمارية
-        adviceElem.className = "p-4 rounded-lg text-sm mt-4 bg-blue-100 text-blue-900";
-        adviceElem.innerHTML = `
-            <strong>خطة التوفير والاستثمار الاستراتيجية:</strong><br>
-            1. <strong>صندوق الطوارئ:</strong> وجه مبالغ الاستثمار أولاً لبناء "صندوق طوارئ" يعادل مصاريف 3 إلى 6 أشهر.<br>
-            2. <strong>الاستثمار طويل الأجل:</strong> بعد بناء الصندوق، قم بضخ المبلغ المخصص للاستثمار (${invest.toFixed(2)}) شهرياً في صناديق المؤشرات مثل (S&P 500) أو الصناديق الاستثمارية المرخصة لتحقيق عائد تراكمي على المدى البعيد.
+        recDiv.className = "p-5 rounded-lg border border-green-200 bg-green-50 text-green-900 space-y-3";
+        recDiv.innerHTML = `
+            <h3 class="font-bold text-base border-b border-green-200 pb-2">خطة استغلال الفائض المالي (${remaining.toFixed(2)}):</h3>
+            <div class="space-y-3 text-sm">
+                <p><strong>1. بناء صندوق الطوارئ أولاً:</strong> يجب تأمين مبلغ <strong>${emergencyFund}</strong> (يعادل مصاريف 3 أشهر). ادخر كامل الفائض حتى تنتهي من بناء هذا الصندوق لحمايتك من أي أزمات.</p>
+                <p><strong>2. تقسيم الفائض بعد صندوق الطوارئ:</strong></p>
+                <ul class="list-disc list-inside space-y-1 pr-4">
+                    <li><strong>50% للاستثمار طويل الأجل (${investAmount}):</strong> ضخ هذا المبلغ شهرياً في صناديق المؤشرات مثل (S&P 500)، الأسهم ذات العوائد، أو الصناديق الاستثمارية المرخصة للاستفادة من الفائدة المركبة على المدى البعيد.</li>
+                    <li><strong>50% للمصاريف الشخصية والرفاهية (${flexAmount}):</strong> تُخصص للمتعة، السفر، والتسوق لضمان الاستمرارية بدون حرمان.</li>
+                </ul>
+            </div>
         `;
     }
 }
